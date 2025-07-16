@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum StatusPedido {
+  RECEBIDO
+  ENTREGUE
+}
+
+model Produto {
+  id          Int       @id @default(autoincrement())
+  nome        String    @db.VarChar(100)
+  descricao   String?
+  preco       Decimal    @db.Decimal(10, 2)
+  imagemUrl   String?    @map("imagem_url") @db.VarChar(255)
+
+  pedidos     Pedido[] 
+}
+
+model Pedido {
+  id                 Int      @id @default(autoincrement())
+  imagemEntrega      String?  @map("imagem_entrega")  @db.VarChar(255)
+  horaEntrega        DateTime?@map("hora_entrega")
+  dataEntrega        DateTime?@map("data_entrega")
+  nomeDestinatario   String?  @map("nome_destinatario") @db.VarChar(255)
+
+  dataPedido         DateTime @default(now()) @map("data_pedido")
+  horaPedido         DateTime?@map("hora_pedido")
+  nomeCliente        String?  @map("nome_cliente")      @db.VarChar(255)
+  telefoneCliente    String?  @map("telefone_cliente")  @db.VarChar(15)
+
+  status             StatusPedido   @default(RECEBIDO)
+  pagamentoConfirmado Boolean       @default(false) @map("pagamento_confirmado")
+  cobrarNoEndereco     Boolean       @default(false) @map("cobrar_no_endereco")
+  observacao           String?       @db.Text
+
+  enderecoId Int  @map("Endereco_id")
+  produtoId  Int  @map("Produto_id")
+
+  endereco   Endereco @relation(fields: [enderecoId], references: [id], onDelete: Restrict)
+  produto    Produto  @relation(fields: [produtoId], references: [id])
+}
+
+model Endereco {
+  id          Int      @id @default(autoincrement())
+  rua         String   @db.VarChar(255)
+  numero      String   @db.VarChar(10)
+  bairro      String   @db.VarChar(255)
+  cep         String   @db.VarChar(255)
+  cidade      String   @db.VarChar(50)
+  complemento String?  @db.Text
+
+  pedidos     Pedido[]
+}
